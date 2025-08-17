@@ -27,10 +27,17 @@ public class CouponIssued {
     @JoinColumn(name = "coupon_id", nullable = false)
     private CouponInventory coupon; // 어떤 쿠폰을 받았는지 기록
 
-    @Column(name = "user_id", nullable = false,updatable = false)
+    @Column(name = "user_id", nullable = false, updatable = false)
     private Long userId; // 발급 대상 ( 유저당 1회 )
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "timestamptz")
     private OffsetDateTime createdAt; // 발급 시각
+
+    CouponIssued(CouponInventory coupon, Long userId) {
+        if (coupon == null) throw new IllegalArgumentException("coupon required");
+        if (userId == null) throw new IllegalArgumentException("userId required");
+        this.coupon = coupon;
+        this.userId = userId;
+    }
 }
