@@ -1,6 +1,6 @@
 package com.gangnam.coupon.domain;
 
-public class CouponInventoryFactory {
+public final class CouponInventoryFactory {
     /**
      * 쿠폰 재고 엔티티 생성
      */
