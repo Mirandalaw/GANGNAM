@@ -1,4 +1,4 @@
-package com.gangnam.coupon.web.dto;
+package com.gangnam.coupon.web.support;
 
 import java.time.OffsetDateTime;
 

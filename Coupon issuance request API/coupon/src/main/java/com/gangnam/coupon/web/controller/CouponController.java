@@ -1,4 +1,4 @@
-package com.gangnam.coupon.web;
+package com.gangnam.coupon.web.controller;
 
 import com.gangnam.coupon.service.CouponService;
 import com.gangnam.coupon.web.response.ApiResponse;
