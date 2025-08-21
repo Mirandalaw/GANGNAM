@@ -15,10 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 동시성 하에서 200명이 요청해도 재고(A:1, B:30, C:69) 합계 100명만 성공하도록 보장.
- * - "조건부 감소" JPQL UPDATE로 원자적 감소 (stock > 0 인 경우에만 -1)
- * - 유저 중복 발급은 UNIQUE(user_id) 제약으로 최종 차단
- * - 발급 정책: A -> B -> C 우선순위 (단순/결정적). 필요 시 다른 전략으로 교체 가능.
+ * CouponService
+ * - 쿠폰 발급 비즈니스 로직을 담당하는 서비스 계층.
+ *
+ *  동시성 제어 및 유저 중복 발급 방지
+ *  - 발급 방식 : A -> B -> C 순서로 시도 ( 단순 )
  */
 @Service
 @RequiredArgsConstructor
@@ -28,10 +29,12 @@ public class CouponService {
     private final CouponIssuedRepository issuedRepository;
     private final EntityManager em;
 
-    /** 비즈니스용 예외 */
+    // 비즈니스용 예외 : 모든 재고 소진
     public static class SoldOutException extends RuntimeException {
         public SoldOutException(String message) { super(message); }
     }
+
+    // 중복 발급 시도
     public static class AlreadyIssuedException extends RuntimeException {
         public AlreadyIssuedException(String message) { super(message); }
     }
@@ -39,6 +42,12 @@ public class CouponService {
     /**
      * 유저에게 쿠폰 1개 발급(유저당 최대 1회).
      * 우선순위: A -> B -> C
+     *
+     * @param userId 발급 대상 유저 ID
+     * @return 발급 성공 시 생성된 CouponIssued ID
+     *
+     * @throws AlreadyIssuedException 이미 발급받은 유저일 경우
+     * @throws SoldOutException 모든 쿠폰이 품절된 경우
      */
     @Transactional
     public Long issueOneForUser(Long userId) {
@@ -47,10 +56,10 @@ public class CouponService {
             throw new AlreadyIssuedException("이미 발급된 유저입니다. userId=" + userId);
         });
 
-        // 2) 발급 시도 순서(정책). 필요 시 주입/설정으로 교체 가능.
+        // 2) 발급 순서 정책 ( 필요 시 DI로 교체 )
         List<String> priority = List.of("A", "B", "C");
 
-        // 3) 각 코드의 ID를 미리 확보(없으면 404)
+        // 3) 각 코드별 재고조회 없으면 404
         List<CouponInventory> inventories = priority.stream()
                 .map(code -> inventoryRepository.findByCode(code)
                         .orElseThrow(() -> new EntityNotFoundException("쿠폰 코드가 존재하지 않습니다: " + code)))
@@ -67,7 +76,7 @@ public class CouponService {
                 try {
                     issuedRepository.saveAndFlush(issued);
                 } catch (DataIntegrityViolationException e) {
-                    // 동시 중복 요청 etc. UNIQUE(user_id) 위반 → 비즈니스 예외로 변환
+                    // UNIQUE(user_id) 위반 → 비즈니스 예외로 변환
                     throw new AlreadyIssuedException("이미 발급된 유저입니다. userId=" + userId);
                 }
                 return issued.getId();
