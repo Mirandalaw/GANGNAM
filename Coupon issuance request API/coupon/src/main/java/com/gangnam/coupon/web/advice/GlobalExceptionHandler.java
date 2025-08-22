@@ -1,9 +1,9 @@
 package com.gangnam.coupon.web.advice;
 
-import com.gangnam.coupon.service.CouponService;
+import com.gangnam.coupon.service.AlreadyIssuedException;
+import com.gangnam.coupon.service.SoldOutException;
 import com.gangnam.coupon.web.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -13,8 +13,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import java.util.stream.Collectors;
 
 import static com.gangnam.coupon.web.support.ErrorResponses.formatViolations;
 import static com.gangnam.coupon.web.support.ErrorResponses.wrap;
@@ -30,14 +28,14 @@ import static com.gangnam.coupon.web.support.ErrorResponses.wrap;
 public class GlobalExceptionHandler {
 
     // 품절/소진 → 409
-    @ExceptionHandler(CouponService.SoldOutException.class)
-    public ResponseEntity<ApiResponse<Void>> handleSoldOut(CouponService.SoldOutException e) {
+    @ExceptionHandler(SoldOutException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSoldOut(SoldOutException e) {
         return wrap(HttpStatus.CONFLICT, e.getMessage());
     }
 
     // 중복 발급 → 409
-    @ExceptionHandler(CouponService.AlreadyIssuedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAlreadyIssued(CouponService.AlreadyIssuedException e) {
+    @ExceptionHandler(AlreadyIssuedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAlreadyIssued(AlreadyIssuedException e) {
         return wrap(HttpStatus.CONFLICT, e.getMessage());
     }
 

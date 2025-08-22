@@ -16,9 +16,10 @@ import java.util.Optional;
  */
 public interface CouponIssuedRepository extends JpaRepository<CouponIssued, Long> {
     // 특정 유저가 이미 발급 받았는지 여부 확인.
-    @Transactional(readOnly = true)
     Optional<CouponIssued> findByUserId(Long userId);
 
+    // 존재 여부 판단
+    boolean existsByUserId(Long userId);
     /**
      * 코드별 발급 건수 집계
      * 반환
@@ -28,7 +29,6 @@ public interface CouponIssuedRepository extends JpaRepository<CouponIssued, Long
      *
      *  단순 집계라 엔티티 로딩 없이 수행.
      */
-    @Transactional(readOnly = true)
     @Query("""
                 select i.coupon.code as code, count(i) as cnt
                         from CouponIssued i
@@ -44,7 +44,6 @@ public interface CouponIssuedRepository extends JpaRepository<CouponIssued, Long
      *
      * - 최신 발급 순 ( createdAt DESC )
      */
-    @Transactional(readOnly = true)
     @Query("""
             select 
                 i.id as id,
@@ -56,6 +55,7 @@ public interface CouponIssuedRepository extends JpaRepository<CouponIssued, Long
             order by i.createdAt desc
             """)
     List<IssuedRow> findAllIssuedView();
+
 
     /**
      * 인터페이스 프로젝션
